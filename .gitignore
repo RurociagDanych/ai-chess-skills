@@ -1,0 +1,12 @@
+.worktrees/
+.venv/
+__pycache__/
+.pytest_cache/
+.coverage
+dist/
+build/
+*.egg-info/
+.ai-chess/
+*.analysis.json
+*.report.html
+artifacts

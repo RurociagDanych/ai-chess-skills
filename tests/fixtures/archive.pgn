@@ -1,0 +1,19 @@
+[Event "Short Game One"]
+[Site "Warsaw"]
+[Date "2026.06.14"]
+[Round "1"]
+[White "Alice"]
+[Black "Bob"]
+[Result "0-1"]
+
+1. f3 e5 2. g4 Qh4# 0-1
+
+[Event "Short Game Two"]
+[Site "Warsaw"]
+[Date "2026.06.14"]
+[Round "2"]
+[White "Carol"]
+[Black "Dave"]
+[Result "1/2-1/2"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 1/2-1/2

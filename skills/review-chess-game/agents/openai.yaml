@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Chess Game"
+  short_description: "Run a complete one-shot chess review with analysis and report"
+  default_prompt: "Use $review-chess-game to run a complete end-to-end chess review with Stockfish analysis and HTML report."

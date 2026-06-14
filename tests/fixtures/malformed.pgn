@@ -1,0 +1,9 @@
+[Event "Malformed Game"]
+[Site "Warsaw"]
+[Date "2026.06.14"]
+[Round "1"]
+[White "Alice"]
+[Black "Bob"]
+[Result "*"]
+
+1. e4 e5 2. Bh6 *
