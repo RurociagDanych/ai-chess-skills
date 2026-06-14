@@ -1,0 +1,25 @@
+name: Stockfish Smoke
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  setup-engine-plan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install project
+        run: python -m pip install .
+
+      - name: Verify Stockfish install plan
+        run: ai-chess setup-engine --version latest --plan-only

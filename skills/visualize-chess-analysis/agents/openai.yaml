@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visualize Chess Analysis"
+  short_description: "Build an offline interactive chess report"
+  default_prompt: "Use $visualize-chess-analysis to build an offline interactive chess report."

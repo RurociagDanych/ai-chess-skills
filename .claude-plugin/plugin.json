@@ -1,0 +1,14 @@
+{
+  "name": "ai-chess-skills",
+  "displayName": "AI Chess Skills",
+  "version": "0.1.0",
+  "description": "Deterministic Chess.com/PGN retrieval, Stockfish setup, engine analysis, and offline HTML reports as agent skills.",
+  "author": {
+    "name": "topek",
+    "email": "topeklc@gmail.com"
+  },
+  "homepage": "https://github.com/RurociagDanych/ai-chess-skills",
+  "repository": "https://github.com/RurociagDanych/ai-chess-skills",
+  "license": "GPL-3.0-or-later",
+  "keywords": ["chess", "stockfish", "analysis", "chess.com", "pgn"]
+}

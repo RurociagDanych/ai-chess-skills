@@ -1,0 +1,4 @@
+interface:
+  display_name: "Analyze Chess Games"
+  short_description: "Analyze a game or archive with Stockfish"
+  default_prompt: "Use $analyze-chess-games to analyze a game or archive with Stockfish."

@@ -1,0 +1,29 @@
+{
+  "tag_name": "sf_17.1",
+  "assets": [
+    {
+      "name": "stockfish-windows-x64-avx2.zip",
+      "browser_download_url": "https://github.com/official-stockfish/Stockfish/releases/download/sf_17.1/stockfish-windows-x64-avx2.zip",
+      "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "size": 1001
+    },
+    {
+      "name": "stockfish-windows-arm64.zip",
+      "browser_download_url": "https://github.com/official-stockfish/Stockfish/releases/download/sf_17.1/stockfish-windows-arm64.zip",
+      "digest": null,
+      "size": 1002
+    },
+    {
+      "name": "stockfish-ubuntu-x64-avx2.tar",
+      "browser_download_url": "https://github.com/official-stockfish/Stockfish/releases/download/sf_17.1/stockfish-ubuntu-x64-avx2.tar",
+      "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "size": 1003
+    },
+    {
+      "name": "stockfish-ubuntu-x64.tar",
+      "browser_download_url": "https://github.com/official-stockfish/Stockfish/releases/download/sf_17.1/stockfish-ubuntu-x64.tar",
+      "digest": null,
+      "size": 1004
+    }
+  ]
+}

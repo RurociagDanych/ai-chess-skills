@@ -1,0 +1,21 @@
+{
+  "name": "ai-chess-skills",
+  "owner": {
+    "name": "topek",
+    "email": "topeklc@gmail.com"
+  },
+  "metadata": {
+    "description": "Deterministic chess workflows: Chess.com/PGN retrieval, Stockfish setup, engine analysis, and offline HTML reports."
+  },
+  "plugins": [
+    {
+      "name": "ai-chess-skills",
+      "source": "./",
+      "description": "Deterministic Chess.com/PGN retrieval, Stockfish setup, engine analysis, and offline HTML reports as agent skills.",
+      "version": "0.1.0",
+      "author": {
+        "name": "topek"
+      }
+    }
+  ]
+}

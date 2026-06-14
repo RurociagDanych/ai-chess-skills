@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-chess-skills"
+version = "0.1.0"
+description = "Deterministic chess analysis tools for agent skills"
+requires-python = ">=3.13,<3.14"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+dependencies = [
+  "chess>=1.11,<2",
+  "httpx>=0.28,<1",
+  "platformdirs>=4.3,<5",
+]
+
+[project.optional-dependencies]
+dev = [
+  "PyYAML>=6,<7",
+  "pytest>=8.3,<9",
+  "pytest-cov>=6,<7",
+]
+
+[project.scripts]
+ai-chess = "ai_chess.cli:entrypoint"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ai_chess"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

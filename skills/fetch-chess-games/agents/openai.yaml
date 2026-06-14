@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fetch Chess Games"
+  short_description: "Fetch Chess.com games or import local PGNs"
+  default_prompt: "Use $fetch-chess-games to fetch Chess.com games or import a local PGN."

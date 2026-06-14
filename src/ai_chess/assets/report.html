@@ -1,0 +1,1092 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Chess Report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef1f6;
+      --bg-grad-1: #eef2f9;
+      --bg-grad-2: #e3e8f2;
+      --panel: #ffffff;
+      --panel-2: #f7f9fc;
+      --text: #15181f;
+      --muted: #6b7280;
+      --border: #e3e7ee;
+      --border-strong: #d4dae4;
+      --light: #eed9b5;
+      --dark: #b07c52;
+      --eval-white: #f8f8f8;
+      --eval-black: #2b2f38;
+      --eval-text: #111111;
+      --accent: #3a5bd9;
+      --accent-2: #6d8bff;
+      --accent-soft: rgba(58, 91, 217, 0.10);
+      --active: #fff1cf;
+      --good: #2fb56b;
+      --warn: #e0533b;
+      --graph-white: #cdd9f7;
+      --graph-black: #4a505d;
+      --graph-grid: #c2c2c2;
+      --graph-line: #3a5bd9;
+      --graph-mark: #e0533b;
+      --shadow-sm: 0 1px 2px rgba(20, 24, 31, 0.05), 0 1px 3px rgba(20, 24, 31, 0.06);
+      --shadow-md: 0 4px 12px rgba(20, 24, 31, 0.07), 0 2px 4px rgba(20, 24, 31, 0.05);
+      --shadow-lg: 0 12px 32px rgba(20, 24, 31, 0.12);
+      --radius: 14px;
+      --radius-sm: 9px;
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0e1016;
+      --bg-grad-1: #12141c;
+      --bg-grad-2: #0b0d13;
+      --panel: #181b23;
+      --panel-2: #1f232d;
+      --text: #e8eaf0;
+      --muted: #9298a6;
+      --border: #272b35;
+      --border-strong: #333845;
+      --light: #6f7886;
+      --dark: #454b59;
+      --eval-white: #e9e9ec;
+      --eval-black: #07080b;
+      --eval-text: #e9e9ec;
+      --accent: #6d8bff;
+      --accent-2: #8aa3ff;
+      --accent-soft: rgba(109, 139, 255, 0.14);
+      --active: #3a3320;
+      --good: #34d07f;
+      --warn: #ff6b54;
+      --graph-white: #7d99e0;
+      --graph-black: #0a0a0c;
+      --graph-grid: #353a45;
+      --graph-line: #6d8bff;
+      --graph-mark: #ff6b54;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      background:
+        radial-gradient(1200px 600px at 80% -10%, var(--bg-grad-1), transparent 60%),
+        radial-gradient(900px 500px at -10% 110%, var(--bg-grad-2), transparent 55%),
+        var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      line-height: 1.5;
+    }
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px 22px 56px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      flex: 0 0 46px;
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+      line-height: 1;
+      border-radius: 13px;
+      color: #fff;
+      background: linear-gradient(140deg, var(--accent), var(--accent-2));
+      box-shadow: var(--shadow-md);
+    }
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .brand-sub {
+      margin: 1px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 470px) 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .col { display: flex; flex-direction: column; gap: 18px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .col .panel { margin-bottom: 0; }
+    .meta-grid .panel { margin-bottom: 0; }
+    .board-area {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .board {
+      flex: 1 1 auto;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      aspect-ratio: 1 / 1;
+      min-width: 0;
+      user-select: none;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-md), 0 0 0 1px var(--border-strong);
+    }
+    .square {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      line-height: 1;
+      font-size: clamp(22px, 4.8vw, 44px);
+    }
+    .light { background: var(--light); }
+    .dark { background: var(--dark); }
+    .sq-rank, .sq-file {
+      position: absolute;
+      font-size: clamp(7px, 1.4vw, 11px);
+      font-weight: 700;
+      line-height: 1;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    .sq-rank { top: 3px; left: 4px; z-index: 2; }
+    .sq-file { bottom: 3px; right: 4px; z-index: 2; }
+    .light .sq-rank, .light .sq-file { color: var(--dark); }
+    .dark .sq-rank, .dark .sq-file { color: var(--light); }
+    .sq-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .sq-overlay.moved-from { background: rgba(80, 200, 120, 0.40); }
+    .sq-overlay.moved-to   { background: rgba(80, 200, 120, 0.60); }
+    .sq-overlay.best-from  { background: rgba(100, 150, 255, 0.40); }
+    .sq-overlay.best-to    { background: rgba(100, 150, 255, 0.60); }
+    .sq-piece {
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+    }
+    /* Use one solid glyph for every piece and color it here, so White pieces
+       always render genuinely white (with a dark outline) regardless of the
+       board square or theme, instead of inheriting the text color. */
+    .sq-piece.white {
+      color: #fbfbfb;
+      -webkit-text-stroke: 1.4px #2a2d34;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+    }
+    .sq-piece.black {
+      color: #20242c;
+      -webkit-text-stroke: 1.4px #05070b;
+      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.12);
+    }
+    .move-info {
+      margin-top: 12px;
+      font-size: 13px;
+      min-height: 1.6em;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .move-info .mi-row { display: flex; align-items: center; gap: 8px; }
+    .mi-badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .mi-badge.played  { background: rgba(47, 181, 107, 0.18); color: var(--good); }
+    .mi-badge.best    { background: var(--accent-soft); color: var(--accent); }
+    .mi-badge.perfect { background: rgba(47, 181, 107, 0.18); color: var(--good); }
+    button.active {
+      background: linear-gradient(140deg, var(--accent), var(--accent-2));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: var(--shadow-sm);
+    }
+    .eval-bar {
+      position: relative;
+      flex: 0 0 40px;
+      width: 40px;
+      background: var(--eval-black);
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    }
+    .eval-fill {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 50%;
+      background: linear-gradient(180deg, #ffffff, var(--eval-white));
+      transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .eval-bar.flip .eval-fill {
+      bottom: auto;
+      top: 0;
+      background: linear-gradient(0deg, #ffffff, var(--eval-white));
+    }
+    .eval-bar-label {
+      position: absolute;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      color: #ffffff;
+      text-shadow: 0 0 2px #000, 0 0 3px #000, 0 1px 2px #000;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      font-variant-numeric: tabular-nums;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .controls label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+    button, select {
+      font: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 14px;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+    }
+    select { border-radius: var(--radius-sm); padding: 8px 12px; }
+    button:hover:not(:disabled), select:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { opacity: 0.4; cursor: default; }
+    #theme-toggle { padding: 8px 16px; }
+    ol, ul { margin: 0; padding-left: 18px; }
+    p { margin: 0 0 8px; }
+    .panel p:last-child { margin-bottom: 0; }
+    .panel p strong { font-weight: 600; }
+    .move-list-wrap {
+      max-height: 360px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      margin: -4px;
+      padding: 4px;
+    }
+    .moves {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr;
+      gap: 3px 6px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+      font-size: 14px;
+    }
+    .moves .moveno { color: var(--muted); text-align: right; padding-right: 6px; align-self: center; font-size: 12px; }
+    .moves .mv {
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 7px;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+    .moves .mv:hover { background: var(--accent-soft); }
+    .moves .mv.active {
+      background: linear-gradient(140deg, var(--accent), var(--accent-2));
+      color: #fff;
+      font-weight: 600;
+    }
+    .muted { color: var(--muted); }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    #insights {
+      max-height: 340px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      margin: -4px;
+      padding: 4px 8px 4px 4px;
+    }
+    .insights-text { white-space: pre-wrap; margin: 0; font-size: 14px; line-height: 1.65; }
+    .ins-move {
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-style: dotted;
+      text-underline-offset: 2px;
+      border-radius: 4px;
+      padding: 0 1px;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+    .ins-move:hover { background: var(--accent-soft); color: var(--accent-2); }
+    #critical-list { padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    #critical-list li {
+      cursor: pointer;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--warn);
+      font-size: 13px;
+      transition: transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    #critical-list li:hover {
+      transform: translateX(2px);
+      box-shadow: var(--shadow-sm);
+    }
+    #critical-list li.muted {
+      border-left-color: var(--border);
+      cursor: default;
+    }
+    #critical-list li.muted:hover { transform: none; box-shadow: none; }
+    #evaluation-graph svg {
+      width: 100%;
+      height: 210px;
+      display: block;
+      background: var(--graph-black);
+      border: 1px solid var(--border-strong);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .graph-legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    .graph-legend .swatch {
+      display: inline-block;
+      width: 11px;
+      height: 11px;
+      border-radius: 3px;
+      vertical-align: -1px;
+      margin-right: 5px;
+    }
+    #position-summary, #provenance, #archive-summary { font-size: 13.5px; }
+    #pv-summary {
+      margin-top: 6px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-size: 12.5px;
+      word-break: break-word;
+    }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; border: 2px solid var(--panel); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      main { padding: 20px 14px 40px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">♞</div>
+        <div>
+          <h1>AI Chess Report</h1>
+          <p class="brand-sub">Engine-backed game review</p>
+        </div>
+      </div>
+      <button id="theme-toggle" type="button">Dark theme</button>
+    </div>
+    <div class="meta-grid">
+      <section class="panel">
+        <h2>Archive Summary</h2>
+        <div id="archive-summary"></div>
+      </section>
+      <section class="panel">
+        <h2>Insights</h2>
+        <div id="insights">__INSIGHTS_HTML__</div>
+      </section>
+    </div>
+    <div class="layout">
+      <section class="panel">
+        <h2>Board</h2>
+        <div class="board-area">
+          <div id="eval-bar" class="eval-bar" title="Evaluation (White advantage up)">
+            <div id="eval-fill" class="eval-fill"></div>
+            <span id="eval-bar-label" class="eval-bar-label"></span>
+          </div>
+          <div id="board" class="board" aria-label="Chess board"></div>
+        </div>
+        <div class="controls">
+          <button id="previous-move" type="button">Previous</button>
+          <button id="next-move" type="button">Next</button>
+          <label for="orientation">Orientation</label>
+          <select id="orientation">
+            <option value="white">White</option>
+            <option value="black">Black</option>
+          </select>
+          <button id="toggle-best-move" type="button">Show best move</button>
+        </div>
+        <div id="move-info" class="move-info"></div>
+      </section>
+      <section class="col">
+        <section class="panel">
+          <h2>Moves</h2>
+          <div class="move-list-wrap">
+            <ol id="move-list" class="moves"></ol>
+          </div>
+        </section>
+        <section class="panel">
+          <h2>Current Position</h2>
+          <div id="position-summary"></div>
+          <div id="pv-summary"></div>
+        </section>
+        <section class="panel">
+          <h2>Evaluation Graph</h2>
+          <div id="evaluation-graph"></div>
+        </section>
+        <section class="panel">
+          <h2>Critical Positions</h2>
+          <ul id="critical-list"></ul>
+        </section>
+        <section class="panel">
+          <h2>Provenance</h2>
+          <div id="provenance"></div>
+        </section>
+      </section>
+    </div>
+  </main>
+  <script id="analysis-data" type="application/json">__ANALYSIS_JSON__</script>
+  <script>
+    // Solid glyphs for every piece; color (white vs black) is applied via the
+    // .white/.black CSS classes so White pieces always look genuinely white.
+    const PIECES = {
+      P: "♟", N: "♞", B: "♝", R: "♜", Q: "♛", K: "♚",
+      p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚"
+    };
+
+    const data = JSON.parse(document.getElementById("analysis-data").textContent);
+    const game = data.games[0] || { plies: [], headers: {}, critical_positions: [], result: "" };
+    const plies = game.plies || [];
+    let currentIndex = plies.length ? 0 : -1;
+    let showBestMove = false;
+
+    // Evaluations are stored from White's perspective (normalize_score calls
+    // score.white() in the Python backend), so no per-ply flipping is needed.
+    // These helpers take an evaluation object ({centipawns, mate}).
+    function whiteCentipawns(ev) {
+      ev = ev || {};
+      if (ev.mate !== null && ev.mate !== undefined) {
+        return ev.mate > 0 ? 100000 : -100000;
+      }
+      if (ev.centipawns === null || ev.centipawns === undefined) return 0;
+      return ev.centipawns;
+    }
+
+    function whiteEvalText(ev) {
+      ev = ev || {};
+      if (ev.mate !== null && ev.mate !== undefined) {
+        const m = ev.mate;
+        return (m > 0 ? "M" : "-M") + Math.abs(m);
+      }
+      if (ev.centipawns === null || ev.centipawns === undefined) return "n/a";
+      const cp = ev.centipawns / 100;
+      return (cp > 0 ? "+" : "") + cp.toFixed(2);
+    }
+
+    // Evaluation of the position shown on the board for move `index` — i.e.
+    // AFTER that move is played, matching the post-move board. Prefer the
+    // stored after-eval; for older artifacts fall back to the next ply's
+    // pre-move eval (the same position), then this move's pre-move eval.
+    function evalForBoard(index) {
+      if (index < 0 || !plies.length) return {};
+      const ply = plies[index];
+      if (ply.evaluation_after) return ply.evaluation_after;
+      if (index + 1 < plies.length) return plies[index + 1].evaluation;
+      return ply.evaluation || {};
+    }
+
+    function parseBoard(fen) {
+      const placement = (fen || "").split(" ")[0] || "8/8/8/8/8/8/8/8";
+      const rows = placement.split("/");
+      return rows.map((row) => {
+        const cells = [];
+        for (const char of row) {
+          const count = Number(char);
+          if (Number.isInteger(count) && count > 0) {
+            for (let i = 0; i < count; i += 1) cells.push("");
+          } else {
+            cells.push(char);
+          }
+        }
+        while (cells.length < 8) cells.push("");
+        return cells.slice(0, 8);
+      });
+    }
+
+    // Convert a UCI square string like "d4" to {fileIndex, rankIndex} board coords.
+    // fileIndex: a=0..h=7; rankIndex: rank8=0..rank1=7 (matches parseBoard row order).
+    function uciSquare(sq) {
+      return {
+        fileIndex: sq.charCodeAt(0) - 97,
+        rankIndex: 8 - parseInt(sq[1], 10),
+      };
+    }
+
+    // ply.fen is the position BEFORE the move. To show where the piece came
+    // from and went to, we need the position AFTER the move was played.
+    function displayFen() {
+      if (currentIndex < 0) return plies.length ? plies[0].fen : "8/8/8/8/8/8/8/8 w - - 0 1";
+      if (currentIndex + 1 < plies.length) return plies[currentIndex + 1].fen;
+      return game.headers.CurrentPosition || plies[currentIndex].fen;
+    }
+
+    function renderBoard() {
+      const board = document.getElementById("board");
+      board.replaceChildren();
+      const orientation = document.getElementById("orientation").value;
+      const fen = displayFen();
+      const rows = parseBoard(fen);
+      const rowOrder = orientation === "white" ? [...rows.keys()] : [...rows.keys()].reverse();
+
+      // Determine squares to highlight.
+      const ply = currentIndex >= 0 ? plies[currentIndex] : null;
+      const movedFrom = ply && ply.move_uci ? uciSquare(ply.move_uci.slice(0, 2)) : null;
+      const movedTo   = ply && ply.move_uci ? uciSquare(ply.move_uci.slice(2, 4)) : null;
+      const bestUci   = showBestMove && ply && ply.pv && ply.pv.length ? ply.pv[0] : null;
+      const bestFrom  = bestUci ? uciSquare(bestUci.slice(0, 2)) : null;
+      const bestTo    = bestUci ? uciSquare(bestUci.slice(2, 4)) : null;
+
+      let renderedRow = 0;
+      for (const rankIndex of rowOrder) {
+        const row = rows[rankIndex];
+        const fileOrder = orientation === "white" ? [...row.keys()] : [...row.keys()].reverse();
+        let renderedCol = 0;
+        for (const fileIndex of fileOrder) {
+          const square = document.createElement("div");
+          square.className = "square " + ((rankIndex + fileIndex) % 2 === 0 ? "light" : "dark");
+
+          // Highlight overlay (behind piece).
+          const overlay = document.createElement("div");
+          overlay.className = "sq-overlay";
+          const isMovedFrom = movedFrom && rankIndex === movedFrom.rankIndex && fileIndex === movedFrom.fileIndex;
+          const isMovedTo   = movedTo   && rankIndex === movedTo.rankIndex   && fileIndex === movedTo.fileIndex;
+          const isBestFrom  = bestFrom && rankIndex === bestFrom.rankIndex && fileIndex === bestFrom.fileIndex;
+          const isBestTo    = bestTo   && rankIndex === bestTo.rankIndex   && fileIndex === bestTo.fileIndex;
+          if (isMovedFrom) overlay.classList.add("moved-from");
+          else if (isMovedTo) overlay.classList.add("moved-to");
+          if (isBestFrom) overlay.classList.add("best-from");
+          else if (isBestTo) overlay.classList.add("best-to");
+          square.appendChild(overlay);
+
+          // Piece (above overlay). Uppercase code = White, lowercase = Black.
+          const code = row[fileIndex];
+          const piece = PIECES[code];
+          if (piece) {
+            const pieceSpan = document.createElement("span");
+            const isWhite = code === code.toUpperCase();
+            pieceSpan.className = "sq-piece " + (isWhite ? "white" : "black");
+            pieceSpan.textContent = piece;
+            square.appendChild(pieceSpan);
+          }
+
+          // Rank label on left-edge squares.
+          if (renderedCol === 0) {
+            const rankLabel = document.createElement("span");
+            rankLabel.className = "sq-rank";
+            rankLabel.textContent = (8 - rankIndex).toString();
+            square.appendChild(rankLabel);
+          }
+          // File label on bottom-edge squares.
+          if (renderedRow === 7) {
+            const fileLabel = document.createElement("span");
+            fileLabel.className = "sq-file";
+            fileLabel.textContent = String.fromCharCode(97 + fileIndex);
+            square.appendChild(fileLabel);
+          }
+
+          board.appendChild(square);
+          renderedCol++;
+        }
+        renderedRow++;
+      }
+    }
+
+    function renderEvalBar() {
+      const bar = document.getElementById("eval-bar");
+      const fill = document.getElementById("eval-fill");
+      const label = document.getElementById("eval-bar-label");
+      const orientation = document.getElementById("orientation").value;
+      // When viewing from Black, White's slice grows from the top instead.
+      bar.classList.toggle("flip", orientation === "black");
+      if (currentIndex < 0) {
+        fill.style.height = "50%";
+        label.textContent = "";
+        return;
+      }
+      const ev = evalForBoard(currentIndex);
+      const fraction = whiteShare(whiteCentipawns(ev));
+      fill.style.height = (fraction * 100).toFixed(1) + "%";
+      label.textContent = whiteEvalText(ev);
+    }
+
+    function formatEvaluation(evaluation) {
+      if (!evaluation) return "unknown";
+      if (evaluation.mate !== null) return "Mate in " + evaluation.mate;
+      if (evaluation.centipawns === null) return "unknown";
+      return (evaluation.centipawns / 100).toFixed(2);
+    }
+
+    function renderMoveList() {
+      const moveList = document.getElementById("move-list");
+      moveList.replaceChildren();
+      // Group plies into full-move rows: number | White ply | Black ply.
+      const rows = new Map();
+      plies.forEach((ply, index) => {
+        const moveNumber = Math.floor((ply.ply + 1) / 2);
+        if (!rows.has(moveNumber)) rows.set(moveNumber, { white: null, black: null });
+        const slot = ply.ply % 2 === 1 ? "white" : "black";
+        rows.get(moveNumber)[slot] = { ply, index };
+      });
+
+      const makeCell = (entry) => {
+        const cell = document.createElement("li");
+        cell.className = "mv";
+        if (!entry) {
+          cell.textContent = "";
+          cell.style.cursor = "default";
+          return cell;
+        }
+        cell.textContent = entry.ply.move_san;
+        if (entry.index === currentIndex) cell.classList.add("active");
+        cell.addEventListener("click", () => {
+          currentIndex = entry.index;
+          renderAll();
+        });
+        return cell;
+      };
+
+      for (const [moveNumber, slot] of rows) {
+        const numberCell = document.createElement("li");
+        numberCell.className = "moveno";
+        numberCell.textContent = moveNumber + ".";
+        moveList.appendChild(numberCell);
+        moveList.appendChild(makeCell(slot.white));
+        moveList.appendChild(makeCell(slot.black));
+      }
+
+      const active = moveList.querySelector(".mv.active");
+      if (active) active.scrollIntoView({ block: "nearest" });
+    }
+
+    function renderPositionSummary() {
+      const summary = document.getElementById("position-summary");
+      const pv = document.getElementById("pv-summary");
+      if (currentIndex < 0) {
+        summary.innerHTML = '<p class="muted">No moves available.</p>';
+        pv.innerHTML = "";
+        return;
+      }
+      const ply = plies[currentIndex];
+      summary.innerHTML =
+        "<p><strong>Move:</strong> " + ply.move_san + "</p>" +
+        "<p><strong>Evaluation (White):</strong> " + whiteEvalText(evalForBoard(currentIndex)) + "</p>" +
+        "<p><strong>Depth:</strong> " + ply.depth + "</p>" +
+        "<p><strong>Phase:</strong> " + ply.phase + "</p>";
+      pv.innerHTML =
+        "<p><strong>PV:</strong> " +
+        (ply.pv && ply.pv.length ? ply.pv.join(" ") : '<span class="muted">No PV</span>') +
+        "</p>";
+    }
+
+    function renderCriticalList() {
+      const list = document.getElementById("critical-list");
+      list.replaceChildren();
+      const critical = game.critical_positions || [];
+      if (!critical.length) {
+        const item = document.createElement("li");
+        item.className = "muted";
+        item.textContent = "No critical positions.";
+        list.appendChild(item);
+        return;
+      }
+      critical.forEach((entry) => {
+        const item = document.createElement("li");
+        const suffix = entry.loss_centipawns === null ? "" : " (" + entry.loss_centipawns + " cp)";
+        item.textContent = moveLabel(entry.ply) + ": " + entry.label + suffix + " - " + entry.reason;
+        item.addEventListener("click", () => {
+          const match = plies.findIndex((ply) => ply.ply === entry.ply);
+          if (match >= 0) {
+            currentIndex = match;
+            renderAll();
+          }
+        });
+        list.appendChild(item);
+      });
+    }
+
+    function renderSummary() {
+      const summary = document.getElementById("archive-summary");
+      const headers = game.headers || {};
+      summary.innerHTML =
+        "<p><strong>Event:</strong> " + (headers.Event || "Unknown") + "</p>" +
+        "<p><strong>White:</strong> " + (headers.White || "Unknown") + "</p>" +
+        "<p><strong>Black:</strong> " + (headers.Black || "Unknown") + "</p>" +
+        "<p><strong>Result:</strong> " + (game.result || "Unknown") + "</p>" +
+        "<p><strong>Games:</strong> " + data.aggregate.games_completed + "/" + data.aggregate.games_total + "</p>" +
+        "<p><strong>Critical positions:</strong> " + data.aggregate.critical_positions + "</p>";
+    }
+
+    function renderProvenance() {
+      const provenance = document.getElementById("provenance");
+      const files = (data.source_manifest && data.source_manifest.files) || [];
+      const byPhase = data.aggregate.by_phase || {};
+      provenance.innerHTML =
+        "<p><strong>Schema:</strong> " + data.schema_version + "</p>" +
+        "<p><strong>Created:</strong> " + data.created_at + "</p>" +
+        "<p><strong>Engine:</strong> " + data.engine.name + " " + data.engine.version + "</p>" +
+        "<p><strong>Source:</strong> " + data.source_manifest.source_ref + "</p>" +
+        "<p><strong>Files:</strong> " + files.map((entry) => entry.path).join(", ") + "</p>" +
+        "<p><strong>Phases:</strong> opening " + (byPhase.opening || 0) +
+        ", middlegame " + (byPhase.middlegame || 0) +
+        ", endgame " + (byPhase.endgame || 0) + "</p>";
+    }
+
+    // Convert a White-perspective centipawn score into a 0..1 share of the
+    // bar/graph height (win-probability style), so the curve stays readable
+    // near equality and never gets swamped by a single huge spike.
+    function whiteShare(cp) {
+      return 1 / (1 + Math.exp(-cp / 350));
+    }
+
+    function renderGraph() {
+      const container = document.getElementById("evaluation-graph");
+      if (!plies.length) {
+        container.innerHTML = '<p class="muted">No evaluations available.</p>';
+        return;
+      }
+      const width = 480;
+      const height = 200;
+      const n = plies.length;
+      const xAt = (index) => (n === 1 ? width / 2 : (index / (n - 1)) * width);
+      // y is the boundary between White's area (above) and Black's (below).
+      // Each point is the eval AFTER that move (board-consistent).
+      const yAt = (index) => height * (1 - whiteShare(whiteCentipawns(evalForBoard(index))));
+
+      // Gridlines at meaningful evaluations (in pawns, White perspective).
+      const gridCps = [300, 100, 0, -100, -300];
+      const grid = gridCps.map((cp) => {
+        const y = (height * (1 - whiteShare(cp))).toFixed(1);
+        const label = cp === 0 ? "0.0" : (cp > 0 ? "+" : "") + (cp / 100).toFixed(0);
+        const strong = cp === 0;
+        return (
+          '<line x1="0" y1="' + y + '" x2="' + width + '" y2="' + y +
+          '" style="stroke:var(--graph-grid)" stroke-width="' + (strong ? 1.2 : 0.6) +
+          '" stroke-dasharray="' + (strong ? "0" : "4 4") + '"></line>' +
+          '<text x="4" y="' + (Number(y) - 3).toFixed(1) + '" font-size="12" font-weight="700"' +
+          ' style="fill:#ffffff;paint-order:stroke;stroke:#000;stroke-width:3px;stroke-linejoin:round">' + label + "</text>"
+        );
+      }).join("");
+
+      // Filled White area: trace the boundary, then close along the top edge.
+      let boundary = "";
+      for (let i = 0; i < n; i += 1) {
+        boundary += (i === 0 ? "M" : "L") + xAt(i).toFixed(1) + "," + yAt(i).toFixed(1) + " ";
+      }
+      const whiteArea = "M0,0 L" + xAt(0).toFixed(1) + ",0 " +
+        boundary.replace(/^M/, "L") + "L" + width + ",0 Z";
+      const boundaryLine = '<path d="' + boundary + '" fill="none" style="stroke:var(--graph-line)" stroke-width="1.6"></path>';
+
+      // Markers for critical positions.
+      const criticalPlies = new Set((game.critical_positions || []).map((c) => c.ply));
+      let marks = "";
+      plies.forEach((ply, index) => {
+        if (!criticalPlies.has(ply.ply)) return;
+        marks += '<circle cx="' + xAt(index).toFixed(1) + '" cy="' + yAt(index).toFixed(1) +
+          '" r="3.2" style="fill:var(--graph-mark)"></circle>';
+      });
+
+      // Current-move cursor.
+      const cursorX = currentIndex < 0 ? width / 2 : xAt(currentIndex);
+      const cursor = currentIndex < 0 ? "" :
+        '<line x1="' + cursorX.toFixed(1) + '" y1="0" x2="' + cursorX.toFixed(1) +
+        '" y2="' + height + '" style="stroke:var(--graph-mark)" stroke-width="1" stroke-dasharray="3 3"></line>' +
+        '<circle cx="' + cursorX.toFixed(1) + '" cy="' + yAt(currentIndex).toFixed(1) +
+        '" r="4" style="fill:var(--graph-line)" stroke="#fff" stroke-width="1.2"></circle>';
+
+      container.innerHTML =
+        '<svg viewBox="0 0 ' + width + " " + height + '" preserveAspectRatio="none" role="img" aria-label="Evaluation graph (White perspective)">' +
+        '<path d="' + whiteArea + '" style="fill:var(--graph-white)"></path>' +
+        grid + boundaryLine + marks + cursor +
+        "</svg>" +
+        '<div class="graph-legend">' +
+        '<span><span class="swatch" style="background:var(--graph-white)"></span>White better</span>' +
+        '<span><span class="swatch" style="background:var(--graph-black)"></span>Black better</span>' +
+        '<span><span class="swatch" style="background:var(--graph-mark)"></span>Critical move</span>' +
+        '</div>';
+
+      const svg = container.querySelector("svg");
+      if (svg) {
+        svg.addEventListener("click", (event) => {
+          const rect = svg.getBoundingClientRect();
+          const ratio = rect.width ? (event.clientX - rect.left) / rect.width : 0;
+          const index = Math.max(0, Math.min(n - 1, Math.round(ratio * (n - 1))));
+          currentIndex = index;
+          renderAll();
+        });
+      }
+    }
+
+    function uciLabel(uci) {
+      if (!uci || uci.length < 4) return uci || "—";
+      const label = uci.slice(0, 2) + " → " + uci.slice(2, 4);
+      return uci.length > 4 ? label + "=" + uci[4].toUpperCase() : label;
+    }
+
+    function renderMoveInfo() {
+      const el = document.getElementById("move-info");
+      el.replaceChildren();
+      if (currentIndex < 0 || !plies.length) return;
+      const ply = plies[currentIndex];
+
+      const playedRow = document.createElement("div");
+      playedRow.className = "mi-row";
+      const playedBadge = document.createElement("span");
+      playedBadge.className = "mi-badge played";
+      playedBadge.textContent = "Played";
+      playedRow.appendChild(playedBadge);
+      const moveText = document.createElement("span");
+      moveText.textContent = ply.move_san + " (" + uciLabel(ply.move_uci) + ")";
+      playedRow.appendChild(moveText);
+      el.appendChild(playedRow);
+
+      if (showBestMove) {
+        const bestUci = ply.pv && ply.pv.length ? ply.pv[0] : null;
+        const bestRow = document.createElement("div");
+        bestRow.className = "mi-row";
+        const bestBadge = document.createElement("span");
+        bestBadge.className = "mi-badge best";
+        bestBadge.textContent = "Best";
+        bestRow.appendChild(bestBadge);
+        const bestText = document.createElement("span");
+        bestText.textContent = bestUci ? uciLabel(bestUci) : "—";
+        bestRow.appendChild(bestText);
+        el.appendChild(bestRow);
+      }
+    }
+
+    function renderAll() {
+      renderBoard();
+      renderEvalBar();
+      renderMoveList();
+      renderPositionSummary();
+      renderCriticalList();
+      renderSummary();
+      renderProvenance();
+      renderGraph();
+      renderMoveInfo();
+      document.getElementById("previous-move").disabled = currentIndex <= 0;
+      document.getElementById("next-move").disabled = currentIndex < 0 || currentIndex >= plies.length - 1;
+    }
+
+    // Jump the board to a ply by index and bring the board into view.
+    function goToPly(index) {
+      if (index < 0 || index >= plies.length) return;
+      currentIndex = index;
+      renderAll();
+      const board = document.getElementById("board");
+      if (board) board.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function plyIndexByNumber(plyNo) {
+      return plies.findIndex((p) => p.ply === plyNo);
+    }
+
+    // Full-move number for a half-move (ply) number: 1,2 -> 1; 3,4 -> 2; ...
+    function moveNumberOf(plyNo) {
+      return Math.floor((plyNo + 1) / 2);
+    }
+
+    // Human move label, e.g. "19.Bxg5" (White) or "18...c4" (Black).
+    function moveLabel(plyNo) {
+      const p = plies.find((x) => x.ply === plyNo);
+      const num = moveNumberOf(plyNo);
+      const dots = plyNo % 2 === 1 ? "." : "...";
+      return p ? num + dots + p.move_san : "move " + num;
+    }
+
+    // Index of White's move for a given full-move number.
+    function indexByMoveNumber(moveNumber) {
+      return plyIndexByNumber(2 * moveNumber - 1);
+    }
+
+    function normalizeSan(san) {
+      return (san || "").replace(/[+#!?]/g, "");
+    }
+
+    // Resolve a "16.Bh4" / "15...h6" style reference to a ply index. isBlack is
+    // true when the reference used "..." (a Black move), false for White, and
+    // null when unknown (match on SAN within the move number regardless).
+    function moveIndexBySan(moveNumber, san, isBlack) {
+      const target = normalizeSan(san);
+      const candidates = [];
+      for (let i = 0; i < plies.length; i += 1) {
+        const p = plies[i];
+        if (Math.floor((p.ply + 1) / 2) !== moveNumber) continue;
+        if (normalizeSan(p.move_san) !== target) continue;
+        candidates.push({ index: i, isBlack: p.ply % 2 === 0 });
+      }
+      if (!candidates.length) return -1;
+      if (isBlack !== null) {
+        const exact = candidates.find((c) => c.isBlack === isBlack);
+        if (exact) return exact.index;
+      }
+      return candidates[0].index;
+    }
+
+    // Turn move references inside the Insights panel into clickable jumps:
+    //   "move 19" / "moves 14" -> White's move of that number
+    //   "16.Bh4" / "15...h6"   -> by move number + SAN
+    function linkifyInsights() {
+      const root = document.getElementById("insights");
+      if (!root) return;
+      const sanCore =
+        "O-O-O|O-O|[KQRBN][a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?|[a-h](?:x[a-h])?[1-8](?:=[QRBN])?";
+      const makeRe = () =>
+        new RegExp("\\b(?:moves?)\\s+(\\d+)|\\b(\\d+)\\.(\\.\\.\\.)?\\s?(" + sanCore + ")[+#]?", "g");
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach((node) => {
+        const text = node.nodeValue;
+        const re = makeRe();
+        if (!re.test(text)) return;
+        re.lastIndex = 0;
+        const frag = document.createDocumentFragment();
+        let last = 0;
+        let linked = false;
+        let m;
+        while ((m = re.exec(text))) {
+          let idx = -1;
+          if (m[1] !== undefined) idx = indexByMoveNumber(Number(m[1]));
+          else idx = moveIndexBySan(Number(m[2]), m[4], m[3] ? true : false);
+          if (idx < 0) continue;
+          if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+          const a = document.createElement("a");
+          a.className = "ins-move";
+          a.href = "#";
+          a.textContent = text.slice(m.index, re.lastIndex);
+          a.addEventListener("click", (event) => {
+            event.preventDefault();
+            goToPly(idx);
+          });
+          frag.appendChild(a);
+          last = re.lastIndex;
+          linked = true;
+        }
+        if (!linked) return;
+        if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+        node.parentNode.replaceChild(frag, node);
+      });
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      document.getElementById("theme-toggle").textContent =
+        theme === "dark" ? "Light theme" : "Dark theme";
+    }
+
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      applyTheme(next);
+      renderGraph();
+    });
+    document.getElementById("previous-move").addEventListener("click", () => {
+      if (currentIndex > 0) {
+        currentIndex -= 1;
+        renderAll();
+      }
+    });
+    document.getElementById("next-move").addEventListener("click", () => {
+      if (currentIndex < plies.length - 1) {
+        currentIndex += 1;
+        renderAll();
+      }
+    });
+    document.getElementById("orientation").addEventListener("change", () => {
+      renderBoard();
+      renderEvalBar();
+    });
+    document.getElementById("toggle-best-move").addEventListener("click", () => {
+      showBestMove = !showBestMove;
+      document.getElementById("toggle-best-move").classList.toggle("active", showBestMove);
+      renderBoard();
+      renderMoveInfo();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft" && currentIndex > 0) {
+        currentIndex -= 1;
+        renderAll();
+      } else if (event.key === "ArrowRight" && currentIndex < plies.length - 1) {
+        currentIndex += 1;
+        renderAll();
+      }
+    });
+
+    applyTheme("light");
+    renderAll();
+    linkifyInsights();
+  </script>
+</body>
+</html>
