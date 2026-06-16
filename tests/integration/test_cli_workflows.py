@@ -98,6 +98,22 @@ def _artifact(game_id: str = "game-1") -> AnalysisArtifact:
             lambda args: args.month_from == "2026-01" and args.month_to == "2026-03",
         ),
         (
+            [
+                "fetch",
+                "lichess",
+                "Topeklc",
+                "--max",
+                "5",
+                "--output-dir",
+                "/tmp/out",
+            ],
+            lambda args: args.command == "fetch"
+            and args.fetch_source == "lichess"
+            and args.username == "Topeklc"
+            and args.max_games == 5
+            and args.output_dir == Path("/tmp/out"),
+        ),
+        (
             ["import", "games.pgn", "--output-dir", "/tmp/out"],
             lambda args: args.command == "import" and args.path == Path("games.pgn"),
         ),
@@ -253,6 +269,21 @@ def test_main_keeps_help_behavior_for_root_and_subcommands(capsys) -> None:
                 "ai-chess/1.0 (contact: test@example.com)",
             ],
             "_run_fetch_chesscom",
+            "fetch ok",
+            {"manifest_path": "out/manifest.v1.json"},
+        ),
+        (
+            "fetch-lichess",
+            [
+                "fetch",
+                "lichess",
+                "Topeklc",
+                "--max",
+                "5",
+                "--output-dir",
+                "out",
+            ],
+            "_run_fetch_lichess",
             "fetch ok",
             {"manifest_path": "out/manifest.v1.json"},
         ),
@@ -473,6 +504,51 @@ def test_fetch_chesscom_flow_uses_env_user_agent_and_month_range(
     assert payload["result"]["manifest_path"] == str(tmp_path / "out" / "manifest.v1.json")
 
 
+def test_fetch_lichess_flow_returns_manifest_and_pgn(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    calls: list[tuple[str, Path, int | None]] = []
+
+    class FakeClient:
+        def fetch_user_games(
+            self,
+            username: str,
+            output_dir: Path,
+            *,
+            max_games: int | None,
+        ):
+            calls.append((username, output_dir, max_games))
+            return SimpleNamespace(
+                manifest_path=output_dir / "manifest.v1.json",
+                pgn_path=output_dir / "Topeklc.lichess.pgn",
+                provenance_path=output_dir / "Topeklc.lichess.provenance.json",
+            )
+
+    monkeypatch.setattr(cli_module, "_make_lichess_client", lambda user_agent: FakeClient())
+
+    assert (
+        cli_module.main(
+            [
+                "fetch",
+                "lichess",
+                "Topeklc",
+                "--max",
+                "5",
+                "--output-dir",
+                str(tmp_path / "out"),
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert calls == [("Topeklc", tmp_path / "out", 5)]
+    assert payload["result"]["manifest_path"] == str(tmp_path / "out" / "manifest.v1.json")
+    assert payload["result"]["pgn_path"] == str(tmp_path / "out" / "Topeklc.lichess.pgn")
+
+
 def test_import_flow_returns_manifest_and_game_count(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -631,3 +707,73 @@ def test_review_pgn_flow_selects_latest_and_writes_report(
     assert analysis_path.is_file()
     assert report_path.is_file()
     assert "<!doctype html>" in report_path.read_text(encoding="utf-8")
+
+
+def test_review_url_routes_lichess_links_to_single_game_export(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "out"
+    pgn_path = output_dir / "abcdefgh.lichess.pgn"
+    games = [
+        SimpleNamespace(
+            game=SimpleNamespace(
+                headers={"White": "A", "Black": "B", "Result": "1-0"},
+            )
+        )
+    ]
+    calls: list[tuple[str, Path]] = []
+
+    class FakeLichessClient:
+        def fetch_game(self, game_id: str, destination: Path):
+            calls.append((game_id, destination))
+            return SimpleNamespace(
+                pgn_path=pgn_path,
+                manifest_path=destination / "manifest.v1.json",
+            )
+
+    monkeypatch.setattr(
+        cli_module,
+        "_ensure_engine",
+        lambda: (SimpleNamespace(path="stockfish", version="18"), False),
+    )
+    monkeypatch.setattr(cli_module, "_make_lichess_client", lambda user_agent: FakeLichessClient())
+    monkeypatch.setattr(cli_module, "read_games", lambda path: games)
+
+    def finish(
+        args,
+        engine,
+        installed,
+        selected_pgn_path,
+        manifest_path,
+        selected_games,
+        game_number=None,
+    ):
+        assert selected_pgn_path == pgn_path
+        assert manifest_path == output_dir / "manifest.v1.json"
+        assert selected_games == games
+        assert game_number == 1
+        return cli_module.CommandResult(
+            status="review ok",
+            payload={"provider": "lichess", "game_id": "abcdefgh"},
+        )
+
+    monkeypatch.setattr(cli_module, "_finish_review", finish)
+
+    assert (
+        cli_module.main(
+            [
+                "review",
+                "url",
+                "https://lichess.org/abcdefgh/black",
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)["result"]
+    assert calls == [("abcdefgh", output_dir)]
+    assert payload == {"provider": "lichess", "game_id": "abcdefgh"}

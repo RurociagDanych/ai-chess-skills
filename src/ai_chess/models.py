@@ -22,7 +22,7 @@ class SourceFile:
 
 @dataclass(frozen=True, slots=True)
 class SourceManifest:
-    source_kind: Literal["local", "chesscom"]
+    source_kind: Literal["local", "chesscom", "lichess"]
     source_ref: str
     files: list[SourceFile]
     schema_version: str = field(default="manifest.v1", init=False)
