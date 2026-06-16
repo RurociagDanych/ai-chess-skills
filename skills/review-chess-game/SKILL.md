@@ -1,6 +1,6 @@
 ---
 name: review-chess-game
-description: Run a complete one-shot chess review — engine setup, game retrieval, Stockfish analysis, and a visual HTML report — from a single request. Use when the user wants their latest Chess.com game (or a local PGN) reviewed end to end with a coaching summary and report, not individual pipeline steps.
+description: Run a complete one-shot chess review — engine setup, game retrieval, Stockfish analysis, and a visual HTML report — from a single request. Use when the user wants their latest Chess.com game, a pasted Chess.com/Lichess game link, or a local PGN reviewed end to end with a coaching summary and report, not individual pipeline steps.
 allowed-tools:
   - Bash(ai-chess review *)
   - Bash(ai-chess report *)
@@ -25,9 +25,10 @@ ai-chess review chesscom USERNAME --latest --output-dir OUTPUT_DIR \
   --user-agent 'project/version (contact: email@example.com)'
 ```
 
-For a specific game the user pastes as a Chess.com link (e.g.
-`https://www.chess.com/game/170242602084` or `.../game/live/170242602084`), use the
-`url` source — the link itself selects the game, so no `--latest`/`--game` is needed:
+For a specific game the user pastes as a Chess.com or Lichess link (e.g.
+`https://www.chess.com/game/170242602084`, `.../game/live/170242602084`, or
+`https://lichess.org/abcdefgh`), use the `url` source — the link itself selects the
+game, so no `--latest`/`--game` is needed:
 
 ```bash
 ai-chess review url GAME_URL --output-dir OUTPUT_DIR \

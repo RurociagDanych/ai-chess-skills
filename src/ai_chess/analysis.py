@@ -384,7 +384,7 @@ def _load_existing_artifact(output_path: Path) -> AnalysisArtifact:
 
     source_manifest = _require_mapping(data.get("source_manifest"), "source_manifest")
     source_kind = _require_str(source_manifest.get("source_kind"), "source_manifest.source_kind")
-    if source_kind not in {"local", "chesscom"}:
+    if source_kind not in {"local", "chesscom", "lichess"}:
         raise _invalid_artifact(
             "Could not read analysis artifact at source_manifest.source_kind.",
             "Ensure the file contains a valid analysis.v1 JSON object.",

@@ -48,7 +48,7 @@ or `$visualize-chess-analysis`.
 
 | Skill | Purpose |
 | --- | --- |
-| `fetch-chess-games` | Retrieve Chess.com games or import local PGNs into a source archive. |
+| `fetch-chess-games` | Retrieve Chess.com or Lichess games, or import local PGNs into a source archive. |
 | `setup-chess-engine` | Inspect and install an official Stockfish build in a user-writable location. |
 | `analyze-chess-games` | Analyze a game or archive with Stockfish into schema-valid JSON. |
 | `visualize-chess-analysis` | Build a self-contained offline interactive HTML report. |
@@ -59,9 +59,11 @@ or `$visualize-chess-analysis`.
 ai-chess setup-engine [--plan-only | --approve-download] [--install-dir PATH]
 ai-chess fetch chesscom USER --month YYYY-MM [--output-dir DIR] [--user-agent UA]
 ai-chess fetch chesscom USER --from YYYY-MM --to YYYY-MM [--output-dir DIR]
+ai-chess fetch lichess USER [--max N] [--output-dir DIR] [--user-agent UA]
 ai-chess import PATH.pgn [--output-dir DIR]
 ai-chess analyze game PATH.pgn [--game N] [--depth 16] [--deep-depth 22]
 ai-chess analyze archive PATH.pgn --output ANALYSIS.json
+ai-chess review url GAME_URL [--output-dir DIR] [--user-agent UA]
 ai-chess report ANALYSIS.json --output report.html [--insights NOTES.txt]
 ai-chess doctor
 ```

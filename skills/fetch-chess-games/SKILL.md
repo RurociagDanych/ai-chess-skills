@@ -1,6 +1,6 @@
 ---
 name: fetch-chess-games
-description: Fetch Chess.com games or import local PGNs into a reusable source archive. Use when the user needs raw game acquisition, manifest/provenance paths, or a local PGN staged for later analysis without running engine analysis yet.
+description: Fetch Chess.com or Lichess games, or import local PGNs into a reusable source archive. Use when the user needs raw game acquisition, manifest/provenance paths, or a local PGN staged for later analysis without running engine analysis yet.
 allowed-tools:
   - Bash(ai-chess fetch *)
   - Bash(ai-chess import *)
@@ -9,7 +9,7 @@ allowed-tools:
 
 # Fetch Chess Games
 
-Confirm the source first: local PGN import or Chess.com retrieval. This skill stops after acquisition and returns artifact paths. Do not run `ai-chess analyze ...` or `ai-chess report ...` here.
+Confirm the source first: local PGN import, Chess.com retrieval, or Lichess retrieval. This skill stops after acquisition and returns artifact paths. Do not run `ai-chess analyze ...` or `ai-chess report ...` here.
 
 ## Local PGN
 
@@ -51,6 +51,29 @@ Return the output paths for:
 - `USERNAME-YYYY-MM.provenance.json`
 
 Preserve provenance and manifest paths exactly as written so later steps can cite source identity, hashes, source URLs, ETags, and retrieval metadata.
+
+## Lichess
+
+Fetch public Lichess games as a PGN archive:
+
+```bash
+ai-chess fetch lichess USERNAME --output-dir OUTPUT_DIR
+```
+
+Limit the number of games:
+
+```bash
+ai-chess fetch lichess USERNAME --max 25 --output-dir OUTPUT_DIR
+```
+
+Return the output paths for:
+
+- `manifest.v1.json`
+- `USERNAME.lichess.pgn`
+- `USERNAME.lichess.provenance.json`
+
+Use `--user-agent` or `AI_CHESS_USER_AGENT` when the caller has an identifiable
+agent string; otherwise the CLI uses its package user agent.
 
 ## Output Handling
 

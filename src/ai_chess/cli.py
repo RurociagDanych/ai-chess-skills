@@ -16,6 +16,7 @@ from ai_chess.analysis import AnalysisSettings, analyze_archive, analyze_game
 from ai_chess.chesscom import ChessComClient, iter_months
 from ai_chess.errors import AppError, ErrorCode
 from ai_chess.io import atomic_write_json
+from ai_chess.lichess import LichessClient, parse_game_link as parse_lichess_game_link
 from ai_chess.models import EngineInfo
 from ai_chess.pgn import import_pgn, read_games, select_latest_index
 from ai_chess.reports import write_report
@@ -67,6 +68,10 @@ def _engine_command() -> list[str]:
 
 def _make_chesscom_client(user_agent: str) -> ChessComClient:
     return ChessComClient(httpx.Client(), user_agent, _chesscom_cache_dir())
+
+
+def _make_lichess_client(user_agent: str) -> LichessClient:
+    return LichessClient(httpx.Client(), user_agent)
 
 
 def _json_dump(payload: object) -> str:
@@ -261,6 +266,13 @@ def _user_agent(args: argparse.Namespace) -> str:
     return value
 
 
+def _lichess_user_agent(args: argparse.Namespace) -> str:
+    value = args.user_agent or os.environ.get("AI_CHESS_USER_AGENT")
+    if value is None or not value.strip():
+        return f"ai-chess-skills/{__version__}"
+    return value.strip()
+
+
 def _run_fetch_chesscom(args: argparse.Namespace) -> CommandResult:
     months = [args.month] if args.month is not None else iter_months(args.month_from, args.month_to)
     client = _make_chesscom_client(_user_agent(args))
@@ -276,6 +288,28 @@ def _run_fetch_chesscom(args: argparse.Namespace) -> CommandResult:
             "manifest_path": str(result.manifest_path),
             "pgn_paths": [str(path) for path in result.pgn_paths],
             "months": months,
+        },
+    )
+
+
+def _run_fetch_lichess(args: argparse.Namespace) -> CommandResult:
+    client = _make_lichess_client(_lichess_user_agent(args))
+    try:
+        result = client.fetch_user_games(
+            args.username,
+            args.output_dir,
+            max_games=args.max_games,
+        )
+    finally:
+        http_client = getattr(client, "client", None)
+        if http_client is not None:
+            http_client.close()
+    return CommandResult(
+        status="fetch ok",
+        payload={
+            "manifest_path": str(result.manifest_path),
+            "pgn_path": str(result.pgn_path),
+            "provenance_path": str(result.provenance_path),
         },
     )
 
@@ -458,6 +492,29 @@ def _game_index_for_id(games: list, game_id: str) -> int:
 
 def _run_review_url(args: argparse.Namespace) -> CommandResult:
     engine, installed = _ensure_engine()
+    try:
+        lichess_game_id = parse_lichess_game_link(args.url)
+    except AppError:
+        lichess_game_id = None
+    if lichess_game_id is not None:
+        client = _make_lichess_client(_lichess_user_agent(args))
+        try:
+            result = client.fetch_game(lichess_game_id, args.output_dir)
+        finally:
+            http_client = getattr(client, "client", None)
+            if http_client is not None:
+                http_client.close()
+        games = read_games(result.pgn_path)
+        return _finish_review(
+            args,
+            engine,
+            installed,
+            result.pgn_path,
+            result.manifest_path,
+            games,
+            game_number=1,
+        )
+
     client = _make_chesscom_client(_user_agent(args))
     try:
         reference = client.fetch_game_reference(args.url)
@@ -534,6 +591,13 @@ def build_parser() -> argparse.ArgumentParser:
     chesscom.add_argument("--user-agent")
     chesscom.set_defaults(handler=_run_fetch_chesscom)
 
+    lichess = fetch_subparsers.add_parser("lichess")
+    lichess.add_argument("username")
+    lichess.add_argument("--max", dest="max_games", type=int)
+    lichess.add_argument("--output-dir", type=Path, required=True)
+    lichess.add_argument("--user-agent")
+    lichess.set_defaults(handler=_run_fetch_lichess)
+
     imported = subparsers.add_parser("import")
     imported.add_argument("path", type=Path)
     imported.add_argument("--output-dir", type=Path, required=True)
@@ -588,7 +652,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_review_selection(review_pgn)
     review_pgn.set_defaults(handler=_run_review_pgn)
 
-    # `review url` takes a full Chess.com game link and reviews that exact game;
+    # `review url` takes a full Chess.com or Lichess game link and reviews that exact game;
     # the link itself selects the game, so no --latest / --game flags are needed.
     review_url = review_subparsers.add_parser("url")
     review_url.add_argument("url")
