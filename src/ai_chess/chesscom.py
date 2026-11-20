@@ -1,3 +1,5 @@
+"""Chess.com client for monthly archives and single game links."""
+
 import errno
 import hashlib
 import json
@@ -66,6 +68,7 @@ CacheStatus: TypeAlias = Literal["network", "not_modified", "fresh_cache"]
 
 @dataclass(frozen=True, slots=True)
 class FetchResult:
+    """Paths and manifest produced by fetching Chess.com archives."""
     manifest: SourceManifest
     manifest_path: Path
     pgn_paths: list[Path]
@@ -147,6 +150,7 @@ def _validate_user_agent(user_agent: str) -> str:
 
 
 def iter_months(start: str, end: str) -> list[str]:
+    """List the YYYY-MM months from start to end inclusive."""
     start_year, start_month = _parse_month(start)
     end_year, end_month = _parse_month(end)
     start_index = start_year * 12 + start_month - 1
@@ -180,6 +184,7 @@ def parse_game_link(url: str) -> tuple[str, str]:
 
 
 def live_game_callback_url(kind: str, game_id: str) -> str:
+    """Build the Chess.com callback URL for a live or daily game."""
     return f"https://www.chess.com/callback/{kind}/game/{game_id}"
 
 
@@ -202,6 +207,7 @@ def _game_headers_from_callback(url: str, body: bytes) -> dict[str, str]:
 
 
 def monthly_games_url(username: str, month: str) -> str:
+    """Build the Chess.com monthly games API URL for a user."""
     normalized_username = _validate_username(username)
     year, month_number = _parse_month(month)
     return (
@@ -211,6 +217,7 @@ def monthly_games_url(username: str, month: str) -> str:
 
 
 def monthly_pgn_url(username: str, month: str) -> str:
+    """Build the Chess.com monthly PGN download URL for a user."""
     return f"{monthly_games_url(username, month)}/pgn"
 
 
@@ -842,6 +849,7 @@ def _validate_redirect(url: str, location: str) -> str:
 
 
 class ChessComClient:
+    """HTTP client that downloads Chess.com games with caching and rate-limit handling."""
     def __init__(
         self,
         client: httpx.Client,
@@ -1168,6 +1176,7 @@ class ChessComClient:
         months: list[str],
         output_dir: Path,
     ) -> FetchResult:
+        """Download PGN and metadata for each month into output_dir and write a source manifest."""
         normalized_username = _validate_username(username)
         if not months:
             raise _invalid_input(

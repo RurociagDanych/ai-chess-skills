@@ -1,3 +1,5 @@
+"""Validate skill frontmatter, agent metadata and the Claude Code plugin manifest."""
+
 from __future__ import annotations
 
 import argparse

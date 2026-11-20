@@ -1,8 +1,11 @@
+"""Application error type and stable error codes."""
+
 from dataclasses import dataclass
 from enum import StrEnum
 
 
 class ErrorCode(StrEnum):
+    """Stable machine-readable error identifiers."""
     INVALID_INPUT = "invalid_input"
     HTTP_ERROR = "http_error"
     RATE_LIMITED = "rate_limited"
@@ -18,6 +21,7 @@ class ErrorCode(StrEnum):
 
 @dataclass(slots=True)
 class AppError(Exception):
+    """Application error carrying a code, message and suggested remedy."""
     code: ErrorCode
     message: str
     remedy: str
@@ -29,6 +33,7 @@ class AppError(Exception):
         return type(self), (self.code, self.message, self.remedy)
 
     def to_dict(self) -> dict[str, str]:
+        """Return the error as a JSON-serializable dict."""
         return {
             "code": self.code.value,
             "message": self.message,

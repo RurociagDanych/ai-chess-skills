@@ -1,3 +1,5 @@
+"""PGN reading, game selection and import into an output directory."""
+
 import errno
 import hashlib
 import json
@@ -17,12 +19,14 @@ from ai_chess.models import SourceFile, SourceManifest
 
 @dataclass(slots=True)
 class ImportedGame:
+    """A parsed game paired with its stable id."""
     game_id: str
     game: chess.pgn.Game
 
 
 @dataclass(slots=True)
 class ImportResult:
+    """Manifest, stored PGN path and games from a PGN import."""
     manifest: SourceManifest
     manifest_path: Path
     pgn_path: Path
@@ -31,20 +35,24 @@ class ImportResult:
 
 class _TrackedGameBuilder(chess.pgn.GameBuilder):
     def begin_game(self) -> None:
+        """Reset the tracked header and movetext results for a new game."""
         super().begin_game()
         self.header_result: str | None = None
         self.movetext_result: str | None = None
 
     def visit_header(self, tagname: str, tagvalue: str) -> None:
+        """Record the Result header while building the game."""
         super().visit_header(tagname, tagvalue)
         if tagname == "Result":
             self.header_result = tagvalue
 
     def visit_result(self, result: str) -> None:
+        """Record the movetext result token while building the game."""
         super().visit_result(result)
         self.movetext_result = result
 
     def result(self) -> tuple[chess.pgn.Game, str | None, str | None]:
+        """Return the game with its header and movetext results."""
         return self.game, self.header_result, self.movetext_result
 
 
@@ -67,6 +75,7 @@ def _game_id(game: chess.pgn.Game) -> str:
 
 
 def read_games(path: Path) -> list[ImportedGame]:
+    """Parse a PGN file into imported games, raising AppError on invalid PGN."""
     games: list[ImportedGame] = []
     try:
         with path.open(encoding="utf-8") as pgn_file:
@@ -438,6 +447,7 @@ def _install_pair(
 
 
 def import_pgn(source: Path, output_dir: Path) -> ImportResult:
+    """Validate a local .pgn file, copy it into output_dir and write a source manifest."""
     if source.suffix != ".pgn":
         raise _invalid_pgn(
             f"Source file must use the .pgn extension: {source}",

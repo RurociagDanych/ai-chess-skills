@@ -1,3 +1,5 @@
+"""Rendering of the self-contained HTML report."""
+
 import html
 import json
 import os
@@ -11,6 +13,7 @@ from ai_chess.models import AnalysisArtifact
 
 
 def inert_json(payload: object) -> str:
+    """Serialize payload to JSON that is safe to embed inside an HTML script tag."""
     return (
         json.dumps(payload, ensure_ascii=True, allow_nan=False, separators=(",", ":"))
         .replace("<", "\\u003c")
@@ -24,6 +27,7 @@ def _template_text() -> str:
 
 
 def render_report(artifact: AnalysisArtifact, insights: str | None = None) -> str:
+    """Render the analysis artifact and optional insights text as an HTML report string."""
     template = _template_text()
     rendered_insights = (
         f'<pre class="insights-text">{html.escape(insights)}</pre>'
@@ -73,6 +77,7 @@ def write_report(
     output_path: Path,
     insights_path: Path | None = None,
 ) -> Path:
+    """Render a report from an artifact file and write it to output_path, returning that path."""
     artifact = _load_existing_artifact(artifact_path)
     insights = (
         insights_path.read_text(encoding="utf-8") if insights_path is not None else None

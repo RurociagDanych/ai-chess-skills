@@ -1,3 +1,5 @@
+"""Stockfish platform detection, installation, discovery and probing."""
+
 import hashlib
 import os
 import platform
@@ -71,6 +73,7 @@ _OPTIMIZATION_PRIORITY = {
 
 @dataclass(frozen=True, slots=True)
 class PlatformTarget:
+    """Operating system, architecture and CPU flags of an install target."""
     os: Literal["linux", "windows"]
     arch: Literal["x86_64", "arm64"]
     cpu_flags: frozenset[str]
@@ -78,6 +81,7 @@ class PlatformTarget:
 
 @dataclass(frozen=True, slots=True)
 class ReleaseAsset:
+    """A downloadable Stockfish release file with its digest."""
     name: str
     url: str
     digest: str | None
@@ -86,6 +90,7 @@ class ReleaseAsset:
 
 @dataclass(frozen=True, slots=True)
 class InstallPlan:
+    """Reviewable description of what an engine install would download and where."""
     version: str
     target: PlatformTarget
     asset: ReleaseAsset
@@ -106,6 +111,7 @@ def _unsupported(message: str) -> AppError:
 
 
 def detect_platform() -> PlatformTarget:
+    """Detect the host platform, raising AppError if unsupported."""
     system = platform.system().lower()
     if system not in {"linux", "windows"}:
         raise _unsupported(f"Stockfish automatic installation does not support {system}.")
@@ -156,6 +162,7 @@ def detect_platform() -> PlatformTarget:
 
 
 def parse_release(payload: object) -> tuple[str, list[ReleaseAsset]]:
+    """Parse GitHub release metadata into a version and its assets."""
     if not isinstance(payload, dict):
         raise _error(
             ErrorCode.DOWNLOAD_FAILED,
@@ -236,6 +243,7 @@ def select_asset(
     assets: Sequence[ReleaseAsset],
     target: PlatformTarget,
 ) -> ReleaseAsset:
+    """Choose the release asset that best matches the target platform."""
     os_tokens = (
         {"windows", "win32", "win64"}
         if target.os == "windows"
@@ -469,6 +477,7 @@ def build_install_plan(
     client: httpx.Client | None = None,
     user_data_root: str | Path | None = None,
 ) -> InstallPlan:
+    """Build an install plan for a release version without downloading anything."""
     root = Path(
         user_data_root
         if user_data_root is not None
@@ -565,6 +574,7 @@ def discover_engine(
     explicit: str | Path | None,
     cache_dir: str | Path,
 ) -> EngineInfo | None:
+    """Find a working Stockfish from an explicit path or the cache, or return None."""
     for candidate in _candidate_paths(explicit, cache_dir):
         if not candidate.is_file():
             continue
@@ -607,6 +617,9 @@ def extract_official_archive(
     archive: str | Path,
     destination: str | Path,
 ) -> Path:
+    """Safely extract an official Stockfish archive and return the engine executable path.
+
+    Raises AppError for unsafe member paths."""
     archive_path = Path(archive)
     destination_path = Path(destination)
     members: list[tuple[PurePosixPath, object]] = []
@@ -858,6 +871,9 @@ def install_engine(
     *,
     client: httpx.Client | None = None,
 ) -> EngineInfo:
+    """Download, verify and install the planned engine.
+
+    Raises AppError unless approved is true."""
     if not approved:
         raise _error(
             ErrorCode.APPROVAL_REQUIRED,
@@ -1080,6 +1096,7 @@ def probe_engine(
     command: str | Path | Sequence[str | Path],
     timeout: float = 5.0,
 ) -> EngineInfo:
+    """Run the engine briefly to confirm it works and return its identity."""
     if isinstance(command, (str, Path)):
         arguments = [str(command)]
     else:

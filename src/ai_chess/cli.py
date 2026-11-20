@@ -1,3 +1,5 @@
+"""Command line parser and subcommand handlers for ai-chess."""
+
 import argparse
 import json
 from datetime import datetime, timezone
@@ -30,12 +32,14 @@ from ai_chess.stockfish import (
 
 @dataclass(frozen=True, slots=True)
 class CommandResult:
+    """Status and JSON payload returned by a CLI command handler."""
     status: str
     payload: dict[str, object]
 
 
 class _CliParser(argparse.ArgumentParser):
     def error(self, message: str) -> None:
+        """Raise an AppError for invalid usage instead of exiting."""
         raise AppError(
             ErrorCode.INVALID_INPUT,
             message,
@@ -566,6 +570,7 @@ def _run_report(args: argparse.Namespace) -> CommandResult:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the argument parser for the ai-chess command."""
     parser = _CliParser(prog="ai-chess")
     parser.add_argument("--version", action="store_true", dest="show_version")
     subparsers = parser.add_subparsers(dest="command")
@@ -671,6 +676,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the CLI with argv and return the process exit code."""
     parser = build_parser()
     try:
         args = parser.parse_args(argv)
@@ -688,4 +694,5 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def entrypoint() -> None:
+    """Console script entry point that exits with the main() return code."""
     raise SystemExit(main())

@@ -1,3 +1,5 @@
+"""Stockfish analysis of imported games and archive aggregation."""
+
 import hashlib
 import json
 from dataclasses import asdict, dataclass, replace
@@ -27,6 +29,7 @@ from ai_chess.stockfish import probe_engine
 
 @dataclass(frozen=True, slots=True)
 class AnalysisSettings:
+    """Engine search limits and thresholds for game analysis."""
     depth: int = 16
     deep_depth: int = 22
     threads: int = 1
@@ -38,6 +41,7 @@ class AnalysisSettings:
 
 @dataclass(frozen=True, slots=True)
 class PlyEvidence:
+    """Evaluations before and after one ply, used to detect critical moves."""
     game_id: str
     ply: int
     phase: Literal["opening", "middlegame", "endgame"]
@@ -46,6 +50,7 @@ class PlyEvidence:
 
 
 def normalize_score(score: chess.engine.PovScore | None) -> dict[str, int | None]:
+    """Convert an engine score to a White-point-of-view centipawn or mate dict."""
     if score is None:
         return {"centipawns": None, "mate": None}
 
@@ -110,6 +115,7 @@ def select_critical_positions(
     threshold: int,
     limit: int,
 ) -> list[CriticalPosition]:
+    """Pick plies where the mover lost at least the threshold, up to the limit."""
     critical: list[tuple[int, int, CriticalPosition]] = []
 
     for ply in plies:
@@ -458,6 +464,7 @@ def _load_existing_artifact(output_path: Path) -> AnalysisArtifact:
 
 
 def aggregate_games(games: Sequence[GameAnalysis]) -> ArchiveAggregate:
+    """Summarize game analyses into archive-level counts by phase and evidence."""
     by_phase = {"opening": 0, "middlegame": 0, "endgame": 0}
     evidence: list[dict[str, object]] = []
 
@@ -510,6 +517,7 @@ def analyze_game(
     engine_command: Sequence[str],
     settings: AnalysisSettings,
 ) -> AnalysisArtifact:
+    """Analyze one game with Stockfish and return a single-game artifact."""
     imported = game if isinstance(game, ImportedGame) else None
     raw_game = imported.game if imported is not None else game
     game_id = imported.game_id if imported is not None else _game_id(raw_game)
@@ -651,6 +659,11 @@ def analyze_archive(
         AnalysisArtifact,
     ] = analyze_game,
 ) -> AnalysisArtifact:
+    """Analyze games in order, persisting the artifact after each game.
+
+    Games already present in an existing artifact at output_path are skipped, so
+    an interrupted run resumes. Per-game failures are recorded as errors; raises
+    AppError only if no game was ever analyzed."""
     source_manifest = _source_manifest_for_archive(games)
     existing = _load_existing_artifact(output_path) if output_path.exists() else None
 

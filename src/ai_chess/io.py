@@ -1,3 +1,5 @@
+"""Hashing and atomic JSON writing helpers."""
+
 import hashlib
 import json
 import os
@@ -7,6 +9,7 @@ from pathlib import Path
 
 
 def sha256_file(path: str | os.PathLike[str]) -> str:
+    """Return the hex SHA-256 digest of a file, read in chunks."""
     digest = hashlib.sha256()
     with open(path, "rb") as file:
         while chunk := file.read(1024 * 1024):
@@ -15,6 +18,7 @@ def sha256_file(path: str | os.PathLike[str]) -> str:
 
 
 def atomic_write_json(path: str | os.PathLike[str], data: object) -> None:
+    """Write data as JSON to path via a temporary file so readers never see partial output."""
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary_path: Path | None = None

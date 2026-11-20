@@ -1,3 +1,5 @@
+"""Lichess game and user export client."""
+
 import hashlib
 import os
 import re
@@ -27,6 +29,7 @@ _PGN_CONTENT_TYPES = {
 
 @dataclass(frozen=True, slots=True)
 class LichessFetchResult:
+    """Paths and manifest produced by fetching Lichess games."""
     manifest: SourceManifest
     manifest_path: Path
     pgn_path: Path
@@ -76,6 +79,7 @@ def _validate_game_id(game_id: str) -> str:
 
 
 def user_games_url(username: str, *, max_games: int | None = None) -> str:
+    """Build the Lichess export URL for a user, optionally capped at max_games."""
     normalized_username = _validate_username(username)
     if max_games is not None and max_games <= 0:
         raise _invalid_input(
@@ -87,10 +91,12 @@ def user_games_url(username: str, *, max_games: int | None = None) -> str:
 
 
 def game_export_url(game_id: str) -> str:
+    """Build the Lichess export URL for one game id."""
     return f"https://lichess.org/game/export/{_validate_game_id(game_id)}"
 
 
 def parse_game_link(url: str) -> str:
+    """Extract the game id from a Lichess game URL or bare id."""
     candidate = url.strip()
     if _GAME_ID_PATTERN.fullmatch(candidate):
         return candidate
@@ -148,6 +154,7 @@ def _utc_now() -> str:
 
 
 class LichessClient:
+    """HTTP client that downloads PGN exports from Lichess."""
     def __init__(self, client: httpx.Client, user_agent: str) -> None:
         self.client = client
         self.user_agent = user_agent.strip()
@@ -281,6 +288,7 @@ class LichessClient:
         *,
         max_games: int | None = None,
     ) -> LichessFetchResult:
+        """Download a user's games into output_dir and write a source manifest."""
         source_url = user_games_url(username, max_games=max_games)
         fetched = self._fetch_pgn(source_url)
         normalized_username = _validate_username(username)
@@ -299,6 +307,7 @@ class LichessClient:
         game_id: str,
         output_dir: Path,
     ) -> LichessFetchResult:
+        """Download a single game into output_dir and write a source manifest."""
         normalized_game_id = _validate_game_id(game_id)
         source_url = game_export_url(normalized_game_id)
         fetched = self._fetch_pgn(source_url)
