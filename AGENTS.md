@@ -28,14 +28,16 @@ Guide for AI coding agents working on ai-chess-skills: agent skills (`SKILL.md` 
 - Public modules, classes and functions have docstrings. Comments explain why, not what. Tool directives such as # noqa are allowed.
 - Formatters: none configured; follow the surrounding style.
 - Skills: do not change the `SKILL.md` frontmatter format or the `agents/openai.yaml` structure; `scripts/validate_skill.py` and CI depend on them. Keep each skill's `allowed-tools` limited to the `ai-chess` subcommands it needs.
-- Commit style: Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
-- Branch naming: prefixed branches such as `feat/...`, `fix/...`, `docs/...`, `chore/...`.
+- Commit style: Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `ci:`, optional scope such as `feat(cli):`).
+- PR branches: use `feat/`, `fix/`, `docs/`, or `chore/` followed by a short lowercase kebab-case description (for example, `fix/stockfish-timeout-handling`). Branch from current `origin/main` and open the PR against `main` unless the task specifies another base.
+- PR titles: use `type(scope): short imperative summary` in English (for example, `fix(cli): handle Stockfish analysis timeouts cleanly`). Choose the type for the change and the scope for the affected component, regardless of the branch prefix.
+- PR body: follow the default template at [`RurociagDanych/.github` (`PULL_REQUEST_TEMPLATE.md`)](https://github.com/RurociagDanych/.github/blob/main/.github/PULL_REQUEST_TEMPLATE.md) (`Summary`, `Changes`, `Not changed and why`, `Owner decisions applied`, `Verification`, `Open risks`), filling every section and removing HTML comments; never merge PRs (the owner merges).
 - Test locations: unit tests in `tests/unit`, end-to-end CLI and engine tests in `tests/integration`, test data and the fake UCI engine in `tests/fixtures`.
 
 ## Guardrails
 
 - Secrets: never commit credentials or tokens. No `.env` is used; the optional `AI_CHESS_USER_AGENT` comes from the environment.
-- Git: no force-push and no history rewrite.
+- Git: no force-push and no history rewrite on shared branches; never merge PRs (the owner merges).
 - Deletes: do not delete files or skills without owner approval.
 - Generated paths: `.venv/`, `.ai-chess/`, `*.analysis.json`, `*.report.html`, `artifacts/`, `dist/`, `build/` and coverage output stay untracked.
 - Lock file: `uv.lock` is the authoritative Python lock; change dependencies in `pyproject.toml` and run `uv lock`.
